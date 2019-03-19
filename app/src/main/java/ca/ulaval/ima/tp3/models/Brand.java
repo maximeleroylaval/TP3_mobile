@@ -12,4 +12,8 @@ public class Brand {
         this.id = content.getInt("id");
         this.name = content.getString("name");
     }
+
+    public Brand(Integer brandId) {
+        this.id = brandId;
+    }
 }

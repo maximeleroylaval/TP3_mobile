@@ -6,7 +6,6 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,7 +21,8 @@ import java.util.List;
 import ca.ulaval.ima.tp3.models.Brand;
 import ca.ulaval.ima.tp3.models.Model;
 import ca.ulaval.ima.tp3.models.Response;
-import ca.ulaval.ima.tp3.models.ResponseListener;
+import ca.ulaval.ima.tp3.models.ResponseArray;
+import ca.ulaval.ima.tp3.models.ResponseArrayListener;
 
 /**
  * A fragment representing a list of Items.
@@ -53,9 +53,9 @@ public class ModelListFragment extends Fragment {
 
         fragment.brand = brand;
 
-        ApiService.getModelsByBrand(fragment.brand, new ResponseListener() {
+        ApiService.getModelsByBrand(fragment.brand, new ResponseArrayListener() {
             @Override
-            public void onResponse(Response myResponse) {
+            public void onResponse(ResponseArray myResponse) {
                 // do anything with response
                 try {
                     fragment.models.clear();

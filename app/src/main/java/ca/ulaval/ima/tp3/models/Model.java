@@ -14,4 +14,9 @@ public class Model {
         this.name = content.getString("name");
         this.brand = new Brand(content.getJSONObject("brand"));
     }
+
+    public Model(Brand brand, Integer modelId) {
+        this.id = modelId;
+        this.brand = brand;
+    }
 }

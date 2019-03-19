@@ -18,46 +18,83 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-import ca.ulaval.ima.tp3.models.Brand;
+import ca.ulaval.ima.tp3.models.AccountLogin;
+import ca.ulaval.ima.tp3.models.AccountLoginOutput;
+import ca.ulaval.ima.tp3.models.Model;
+import ca.ulaval.ima.tp3.models.OfferLightOutput;
 import ca.ulaval.ima.tp3.models.Response;
 import ca.ulaval.ima.tp3.models.ResponseArray;
 import ca.ulaval.ima.tp3.models.ResponseArrayListener;
+import ca.ulaval.ima.tp3.models.ResponseListener;
 
 /**
  * A fragment representing a list of Items.
  * <p/>
- * Activities containing this fragment MUST implement the {@link OnBrandListFragmentInteractionListener}
+ * Activities containing this fragment MUST implement the {@link OnOfferLightListFragmentInteractionListener}
  * interface.
  */
-public class BrandListFragment extends Fragment {
+public class OfferLightListFragment extends Fragment {
 
     private Integer mColumns = 1;
-    private OnBrandListFragmentInteractionListener mListener;
-    private BrandRecycleViewAdapter mAdapter;
+    private OnOfferLightListFragmentInteractionListener mListener;
+    private OfferLightRecycleViewAdapter mAdapter;
 
-    private List<Brand> brands = new ArrayList<>();
+    private Model model;
+    private List<OfferLightOutput> offers = new ArrayList<>();
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
      */
-    public BrandListFragment() {
+    public OfferLightListFragment() {
     }
 
     // TODO: Customize parameter initialization
     @SuppressWarnings("unused")
-    public static BrandListFragment newInstance() {
-        final BrandListFragment fragment = new BrandListFragment();
+    public static OfferLightListFragment newInstance(Model model) {
+        final OfferLightListFragment fragment = new OfferLightListFragment();
 
-        ApiService.getBrands(new ResponseArrayListener() {
+        fragment.model = model;
+
+        ApiService.getOffersBySearch(fragment.model, fragment.model.brand, new ResponseArrayListener() {
             @Override
             public void onResponse(ResponseArray myResponse) {
                 // do anything with response
                 try {
-                    fragment.brands.clear();
+                    fragment.offers.clear();
                     for (int i = 0; i < myResponse.content.length(); i++) {
                         JSONObject obj = myResponse.content.getJSONObject(i);
-                        fragment.brands.add(new Brand(obj));
+                        fragment.offers.add(new OfferLightOutput(obj));
+                    }
+                    fragment.mAdapter.notifyDataSetChanged();
+                } catch(JSONException e) {
+                    ApiService.displayMessage("JSON EXCEPTION", e.toString());
+                }
+            }
+            @Override
+            public void onError(ANError anError) {
+                // handle error
+                ApiService.displayError(anError);
+            }
+        });
+
+        return fragment;
+    }
+
+    // TODO: Customize parameter initialization
+    @SuppressWarnings("unused")
+    public static OfferLightListFragment newInstance() {
+        final OfferLightListFragment fragment = new OfferLightListFragment();
+
+        ApiService.getOffersByAccount(ApiService.getAccount(), new ResponseArrayListener() {
+            @Override
+            public void onResponse(ResponseArray myResponse) {
+                // do anything with response
+                try {
+                    fragment.offers.clear();
+                    for (int i = 0; i < myResponse.content.length(); i++) {
+                        JSONObject obj = myResponse.content.getJSONObject(i);
+                        fragment.offers.add(new OfferLightOutput(obj));
                     }
                     fragment.mAdapter.notifyDataSetChanged();
                 } catch(JSONException e) {
@@ -82,7 +119,7 @@ public class BrandListFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        final View view = inflater.inflate(R.layout.fragment_brand_item_list, container, false);
+        View view = inflater.inflate(R.layout.fragment_offer_light_item_list, container, false);
 
         // Set the adapter
         if (view instanceof RecyclerView) {
@@ -93,7 +130,7 @@ public class BrandListFragment extends Fragment {
             } else {
                 recyclerView.setLayoutManager(new GridLayoutManager(context, mColumns));
             }
-            mAdapter = new BrandRecycleViewAdapter(this.brands, mListener);
+            mAdapter = new OfferLightRecycleViewAdapter(this.offers, mListener);
             recyclerView.setAdapter(mAdapter);
         }
         return view;
@@ -102,8 +139,8 @@ public class BrandListFragment extends Fragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if (context instanceof OnBrandListFragmentInteractionListener) {
-            mListener = (OnBrandListFragmentInteractionListener) context;
+        if (context instanceof OnOfferLightListFragmentInteractionListener) {
+            mListener = (OnOfferLightListFragmentInteractionListener) context;
         } else {
             throw new RuntimeException(context.toString()
                     + " must implement OnListFragmentInteractionListener");
@@ -126,8 +163,8 @@ public class BrandListFragment extends Fragment {
      * "http://developer.android.com/training/basics/fragments/communicating.html"
      * >Communicating with Other Fragments</a> for more information.
      */
-    public interface OnBrandListFragmentInteractionListener {
+    public interface OnOfferLightListFragmentInteractionListener {
         // TODO: Update argument type and name
-        void onBrandListFragmentInteraction(Brand brand);
+        void onOfferLightListFragmentInteractionListener(OfferLightOutput offer);
     }
 }

@@ -3,4 +3,15 @@
     <string name="tab_text_1">Offres</string>
     <string name="tab_text_2">Vendre</string>
     <string name="tab_text_3">Mes Annonces</string>
+    <string name="car">Voiture</string>
+    <string name="date_format">\'Le\' dd/MM/yyyy \'à\' hh:mm</string>
+    <string name="currency">$ CAD</string>
+    <string name="kilometers">Km</string>
+    <string name="made_in">Produite en</string>
+    <string name="uploaded_by">Mise en ligne par</string>
+    <string name="myself">moi même</string>
+    <string name="anonymous">un utilisateur</string>
+    <string name="transmission">Transmission</string>
+    <string name="student_email">maxime.leroy.4@ulaval.ca</string>
+    <string name="student_identification_number">111244596</string>
 </resources>
