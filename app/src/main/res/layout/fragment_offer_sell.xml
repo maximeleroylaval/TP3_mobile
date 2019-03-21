@@ -28,12 +28,12 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:padding="2dp"
-                android:background="@color/colorGrey">
+                android:background="@color/colorLightGrey">
                 <Spinner
                     android:id="@+id/brand_choice_spinner"
                     android:layout_width="match_parent"
                     android:layout_height="40dp"
-                    android:popupBackground="@color/colorGrey" />
+                    android:popupBackground="@color/colorLightGrey" />
             </RelativeLayout>
 
             <TextView
@@ -50,12 +50,12 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:padding="2dp"
-                android:background="@color/colorGrey">
+                android:background="@color/colorLightGrey">
                 <Spinner
                     android:id="@+id/model_choice_spinner"
                     android:layout_width="match_parent"
                     android:layout_height="40dp"
-                    android:popupBackground="@color/colorGrey" />
+                    android:popupBackground="@color/colorLightGrey" />
             </RelativeLayout>
 
             <LinearLayout
@@ -89,6 +89,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="420"
+                android:inputType="number"
                 android:layout_gravity="start"
                 android:textColor="@color/colorBlack" />
 
@@ -122,6 +123,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="1337"
+                android:inputType="number"
                 android:textColor="@color/colorBlack" />
 
             <TextView
@@ -138,6 +140,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="1997"
+                android:editable="false"
+                android:inputType="none"
                 android:textColor="@color/colorBlack" />
 
             <TextView
@@ -156,10 +160,10 @@
                 android:padding="2dp"
                 android:background="@color/colorLightGrey">
                 <Spinner
-                    android:id="@+id/transmisson_choice_spinner"
+                    android:id="@+id/transmission_choice_spinner"
                     android:layout_width="match_parent"
                     android:layout_height="40dp"
-                    android:popupBackground="@color/colorGrey" />
+                    android:popupBackground="@color/colorLightGrey" />
             </RelativeLayout>
 
             <TextView

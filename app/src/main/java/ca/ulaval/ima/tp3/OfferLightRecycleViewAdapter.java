@@ -41,13 +41,13 @@ public class OfferLightRecycleViewAdapter extends RecyclerView.Adapter<OfferLigh
         holder.mItem = mValues.get(position);
         holder.mBrandNameView.setText(mValues.get(position).model.brand.name);
         holder.mModelNameView.setText(mValues.get(position).model.name);
-        holder.mYearView.setText(mValues.get(position).year.toString());
+        holder.mYearView.setText(Integer.toString(mValues.get(position).year));
         holder.mOwnerView.setText(mValues.get(position).getFormattedOwner(
                 holder.mView.getContext().getString(R.string.myself),
                 holder.mView.getContext().getString(R.string.anonymous)
         ));
-        holder.mKilometersView.setText(mValues.get(position).kilometers.toString());
-        holder.mPriceView.setText(mValues.get(position).price.toString());
+        holder.mKilometersView.setText(Integer.toString(mValues.get(position).kilometers));
+        holder.mPriceView.setText(Integer.toString(mValues.get(position).price));
 
         holder.mCreatedView.setText(mValues.get(position).getFormattedCreationDate(
                 holder.mView.getContext().getString(R.string.date_format)

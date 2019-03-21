@@ -1,6 +1,8 @@
 package ca.ulaval.ima.tp3.models;
 
 import android.content.Context;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -13,7 +15,7 @@ import java.util.Map;
 
 import ca.ulaval.ima.tp3.R;
 
-public class OfferOutput extends OfferLightOutput {
+public class OfferOutput extends OfferLightOutput implements Parcelable {
     public String description;
     public Account seller;
     public String transmission;
@@ -56,4 +58,36 @@ public class OfferOutput extends OfferLightOutput {
         }
         return transmissions;
     }
+
+    protected OfferOutput(Parcel in) {
+        super(in);
+        description = in.readString();
+        seller = (Account) in.readValue(Account.class.getClassLoader());
+        transmission = in.readString();
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(description);
+        dest.writeValue(seller);
+        dest.writeString(transmission);
+    }
+
+    @SuppressWarnings("unused")
+    public static final Parcelable.Creator<OfferOutput> CREATOR = new Parcelable.Creator<OfferOutput>() {
+        @Override
+        public OfferOutput createFromParcel(Parcel in) {
+            return new OfferOutput(in);
+        }
+
+        @Override
+        public OfferOutput[] newArray(int size) {
+            return new OfferOutput[size];
+        }
+    };
 }

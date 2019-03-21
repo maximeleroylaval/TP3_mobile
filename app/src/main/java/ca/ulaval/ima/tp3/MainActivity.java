@@ -67,45 +67,32 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void loadSavedValues(Bundle savedInstanceState) {
-        Integer brandId;
-        Integer modelId;
-        Integer offerId;
-
-        if (savedInstanceState == null) {
-            Intent intent = getIntent();
-            brandId = intent.getIntExtra("brandId", -1);
-            modelId = intent.getIntExtra("modelId", -1);
-            offerId = intent.getIntExtra("offerId", -1);
-        } else { // savedInstanceState has saved values
-            brandId = savedInstanceState.getInt("brandId");
-            modelId = savedInstanceState.getInt("modelId");
-            offerId = savedInstanceState.getInt("offerId");
-        }
-
-        Brand brand = null;
-        Model model = null;
-        OfferLightOutput offer = null;
-
-        if (brandId != -1) {
-            brand = new Brand(brandId);
-            if (modelId != -1) {
-                model = new Model(brand, modelId);
-                if (offerId != -1) {
-                    offer = new OfferLightOutput(model, offerId);
-                }
+        if (savedInstanceState != null) {
+            if (mSectionsPagerAdapter.mBrand == null) {
+                Brand brand = savedInstanceState.getParcelable("brand");
+                mSectionsPagerAdapter.setBrand(brand);
+            }
+            if (mSectionsPagerAdapter.mModel == null) {
+                Model model = savedInstanceState.getParcelable("model");
+                mSectionsPagerAdapter.setModel(model);
+            }
+            if (mSectionsPagerAdapter.mOffer == null) {
+                OfferLightOutput offer = savedInstanceState.getParcelable("offer");
+                mSectionsPagerAdapter.setOfferLight(offer);
+            }
+            if (mSectionsPagerAdapter.mOfferAccount == null) {
+                OfferLightOutput offerAccount = savedInstanceState.getParcelable("offerAccount");
+                mSectionsPagerAdapter.setOfferAccount(offerAccount);
             }
         }
-        mSectionsPagerAdapter.setBrand(brand);
-        mSectionsPagerAdapter.setModel(model);
-        mSectionsPagerAdapter.setOfferLight(offer);
-        Log.e("DONE", "DONE");
     }
 
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
-        savedInstanceState.putInt("brandId", mSectionsPagerAdapter.mBrand != null ? mSectionsPagerAdapter.mBrand.id : -1);
-        savedInstanceState.putInt("modelId", mSectionsPagerAdapter.mModel != null ? mSectionsPagerAdapter.mModel.id : -1);
-        savedInstanceState.putInt("offerId", mSectionsPagerAdapter.mOffer != null ? mSectionsPagerAdapter.mOffer.id : -1);
+        savedInstanceState.putParcelable("brand", mSectionsPagerAdapter.mBrand);
+        savedInstanceState.putParcelable("model", mSectionsPagerAdapter.mModel);
+        savedInstanceState.putParcelable("offer", mSectionsPagerAdapter.mOffer);
+        savedInstanceState.putParcelable("offerAccount", mSectionsPagerAdapter.mOfferAccount);
 
         super.onSaveInstanceState(savedInstanceState);
     }
@@ -156,7 +143,8 @@ public class MainActivity extends AppCompatActivity
         if (!hasEmailApp) {
             ApiService.displayMessage(
                     "EMAIL ERROR",
-                    getString(R.string.email_app_missing)
+                    getString(R.string.email_app_missing),
+                    null
             );
         } else {
             String uriText =
@@ -174,7 +162,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onSellOfferSubmitFragmentInteractionListener(OfferInput offer) {
-        ApiService.addOfferByAccount(ApiService.getAccount(), offer, new ResponseListener() {
+        ApiService.addOffer(offer, new ResponseListener() {
             @Override
             public void onResponse(Response response) {
                 ApiService.displayMessage("OFFER UPLOADED", getString(R.string.upload_success));

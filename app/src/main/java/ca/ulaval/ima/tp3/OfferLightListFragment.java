@@ -16,7 +16,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import ca.ulaval.ima.tp3.models.Model;
 import ca.ulaval.ima.tp3.models.OfferLightOutput;
@@ -37,7 +36,7 @@ public class OfferLightListFragment extends Fragment {
 
     private int type;
     private Model model;
-    private List<OfferLightOutput> offers = new ArrayList<>();
+    private ArrayList<OfferLightOutput> offers;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -54,28 +53,6 @@ public class OfferLightListFragment extends Fragment {
         fragment.model = model;
         fragment.type = 0;
 
-        ApiService.getOffersBySearch(fragment.model, fragment.model.brand, new ResponseArrayListener() {
-            @Override
-            public void onResponse(ResponseArray myResponse) {
-                // do anything with response
-                try {
-                    fragment.offers.clear();
-                    for (int i = 0; i < myResponse.content.length(); i++) {
-                        JSONObject obj = myResponse.content.getJSONObject(i);
-                        fragment.offers.add(new OfferLightOutput(obj));
-                    }
-                    fragment.mAdapter.notifyDataSetChanged();
-                } catch(JSONException e) {
-                    ApiService.displayMessage("JSON EXCEPTION", e.toString());
-                }
-            }
-            @Override
-            public void onError(ANError anError) {
-                // handle error
-                ApiService.displayError(anError);
-            }
-        });
-
         return fragment;
     }
 
@@ -86,17 +63,23 @@ public class OfferLightListFragment extends Fragment {
 
         fragment.type = 1;
 
-        ApiService.getOffersByAccount(ApiService.getAccount(), new ResponseArrayListener() {
+        return fragment;
+    }
+
+    public void loadOffersBySearch() {
+        if (model == null || model.brand == null)
+            return;
+        ApiService.getOffersBySearch(model, model.brand, new ResponseArrayListener() {
             @Override
             public void onResponse(ResponseArray myResponse) {
                 // do anything with response
                 try {
-                    fragment.offers.clear();
+                    offers.clear();
                     for (int i = 0; i < myResponse.content.length(); i++) {
                         JSONObject obj = myResponse.content.getJSONObject(i);
-                        fragment.offers.add(new OfferLightOutput(obj));
+                        offers.add(new OfferLightOutput(obj));
                     }
-                    fragment.mAdapter.notifyDataSetChanged();
+                    mAdapter.notifyDataSetChanged();
                 } catch(JSONException e) {
                     ApiService.displayMessage("JSON EXCEPTION", e.toString());
                 }
@@ -107,19 +90,86 @@ public class OfferLightListFragment extends Fragment {
                 ApiService.displayError(anError);
             }
         });
+    }
 
-        return fragment;
+    public void loadMyOffers() {
+        ApiService.getMyOffers(new ResponseArrayListener() {
+            @Override
+            public void onResponse(ResponseArray myResponse) {
+                // do anything with response
+                try {
+                    offers.clear();
+                    for (int i = 0; i < myResponse.content.length(); i++) {
+                        JSONObject obj = myResponse.content.getJSONObject(i);
+                        offers.add(new OfferLightOutput(obj));
+                    }
+                    mAdapter.notifyDataSetChanged();
+                } catch(JSONException e) {
+                    ApiService.displayMessage("JSON EXCEPTION", e.toString());
+                }
+            }
+            @Override
+            public void onError(ANError anError) {
+                // handle error
+                ApiService.displayError(anError);
+            }
+        });
+    }
+
+    public void loadOffersByType(int myType) {
+        switch (myType) {
+            case 0:
+                this.loadOffersBySearch();
+                break;
+            case 1:
+                this.loadMyOffers();
+                break;
+            default:
+                this.loadOffersBySearch();
+                break;
+        }
+    }
+
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if (isVisibleToUser && this.type == 1) {
+            this.loadOffersByType(this.type);
+        }
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (savedInstanceState != null) {
+            if (this.model == null)
+                this.model = savedInstanceState.getParcelable("model");
+            if (this.offers == null)
+                this.offers = savedInstanceState.getParcelableArrayList("offers");
+            if (savedInstanceState.getInt("type", -1) != -1)
+                this.type = savedInstanceState.getInt("type", -1);
+        }
+
+        this.offers = this.offers == null ? new ArrayList<OfferLightOutput>() : this.offers;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        savedInstanceState.putParcelable("model", model);
+        savedInstanceState.putParcelableArrayList("offers", offers);
+        savedInstanceState.putInt("type", type);
+
+        super.onSaveInstanceState(savedInstanceState);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_offer_light_item_list, container, false);
+
+        if (this.type != 1)
+            this.loadOffersByType(this.type);
 
         // Set the adapter
         if (view instanceof RecyclerView) {

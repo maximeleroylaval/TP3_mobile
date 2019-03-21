@@ -3,15 +3,16 @@ package ca.ulaval.ima.tp3;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 
 import com.androidnetworking.AndroidNetworking;
 import com.androidnetworking.common.Priority;
 import com.androidnetworking.error.ANError;
+import com.androidnetworking.interfaces.JSONObjectRequestListener;
 import com.jacksonandroidnetworking.JacksonParserFactory;
 
 import org.json.JSONException;
@@ -24,7 +25,9 @@ import ca.ulaval.ima.tp3.models.Model;
 import ca.ulaval.ima.tp3.models.OfferInput;
 import ca.ulaval.ima.tp3.models.OfferLightOutput;
 import ca.ulaval.ima.tp3.models.Response;
+import ca.ulaval.ima.tp3.models.ResponseArray;
 import ca.ulaval.ima.tp3.models.ResponseArrayListener;
+import ca.ulaval.ima.tp3.models.ResponseError;
 import ca.ulaval.ima.tp3.models.ResponseListener;
 
 public class ApiService {
@@ -37,6 +40,10 @@ public class ApiService {
 
     private static AccountLoginOutput account = new AccountLoginOutput();
 
+    public interface OnSuccessListener {
+        void onSuccess();
+    }
+
     static AccountLoginOutput getAccount() {
         return ApiService.account;
     }
@@ -48,49 +55,86 @@ public class ApiService {
     }
 
     static void displayError(ANError anError) {
+        ApiService.displayError(anError, null);
+    }
+
+    static void displayMessage(String title, String message) { ApiService.displayMessage(title, message, null); }
+
+    static void retryForeverLogin() {
+        ApiService.retryForeverLogin(null, null);
+    }
+
+    static void displayError(ANError anError, DialogInterface.OnClickListener listener) {
         String msg;
         if (anError != null) {
             if (anError.getErrorCode() != 0) {
-                if (anError.getErrorCode() == 401) {
-                    ApiService.clientLogin(new ResponseListener() {
-                        @Override
-                        public void onResponse(Response response) {
-                            try {
-                                ApiService.account = new AccountLoginOutput(response.content);
-                            } catch (JSONException e) {
-                                ApiService.displayMessage("JSON ERROR",
-                                        "Cannot parse login information");
-                                e.printStackTrace();
-                            }
-                        }
-                        @Override
-                        public void onError(ANError anError) {
-                            ApiService.displayError(anError);
-                        }
-                    });
-                    return;
-                } else {
-                    msg = "errorCode : " + anError.getErrorCode();
-                    msg += "\nerrorBody : " + anError.getErrorBody();
-                    msg += "\nerrorDetail : " + anError.getErrorDetail();
+                msg = "Code : " + anError.getErrorCode();
+                try {
+                    ResponseError response = new ResponseError(anError.getErrorBody());
+                    msg += "\nMessage : " + response.display;
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                    msg += "\nBody : " + anError.getErrorBody();
                 }
+                msg += "\nDetail : " + anError.getErrorDetail();
             } else {
                 msg = "errorDetail : " + anError.getErrorDetail();
             }
         } else {
             msg = "Unexpected error";
         }
-        ApiService.displayMessage("NETWORK ERROR", msg);
+        ApiService.displayMessage("NETWORK ERROR", msg, listener);
     }
 
-    static void displayMessage(String title, String message) {
+    static void displayMessage(String title, String message, final DialogInterface.OnClickListener listener) {
         AlertDialog.Builder builder = new AlertDialog.Builder(ApiService.mainContext);
 
         builder.setMessage(message)
                 .setTitle(title);
 
+        builder.setPositiveButton("OK", listener);
+        builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialog) {
+                listener.onClick(dialog, DialogInterface.BUTTON_POSITIVE);
+            }
+        });
+
         AlertDialog dialog = builder.create();
         dialog.show();
+    }
+
+    static void retryForeverLogin(ANError error, final OnSuccessListener listener) {
+        if (error != null) {
+            ApiService.displayError(error, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    retryForeverLogin(null, listener);
+                }
+            });
+            return;
+        }
+        ApiService.clientLogin(new ResponseListener() {
+            @Override
+            public void onResponse(Response response) {
+                try {
+                    ApiService.account = new AccountLoginOutput(response.content);
+                    Log.e("LOGGED", "BORDEL");
+                    if (listener != null) {
+                        Log.e("LOGGED", "CALLING SUCCESS");
+                        listener.onSuccess();
+                    }
+                } catch (JSONException e) {
+                    ApiService.displayMessage("JSON ERROR",
+                            "Cannot parse login information");
+                    e.printStackTrace();
+                }
+            }
+            @Override
+            public void onError(ANError anError) {
+                retryForeverLogin(anError, listener);
+            }
+        });
     }
 
     static void clientLogin(final ResponseListener listener) {
@@ -117,7 +161,54 @@ public class ApiService {
         dialog.show();
     }
 
+    static ResponseArrayListener loginOnResponseArrayFail(final ResponseArrayListener responseListener,
+                                                          final OnSuccessListener successListener) {
+        return new ResponseArrayListener() {
+            @Override
+            public void onResponse(ResponseArray response) { responseListener.onResponse(response); }
+
+            @Override
+            public void onError(ANError anError) {
+                if (anError.getErrorCode() == 401) {
+                    retryForeverLogin(anError, successListener);
+                } else {
+                    responseListener.onError(anError);
+                }
+            }
+        };
+    }
+
+    static ResponseListener loginOnResponseFail(final ResponseListener responseListener,
+                                                final OnSuccessListener successListener) {
+        return new ResponseListener() {
+            @Override
+            public void onResponse(Response response) {
+                responseListener.onResponse(response);
+            }
+
+            @Override
+            public void onError(ANError anError) {
+                if (anError.getErrorCode() == 401) {
+                    retryForeverLogin(anError, successListener);
+                } else {
+                    responseListener.onError(anError);
+                }
+            }
+        };
+    }
+
+    static JSONObjectRequestListener needAuthentification(JSONObjectRequestListener clientListener, OnSuccessListener successListener) {
+        if (clientListener instanceof ResponseListener) {
+            return loginOnResponseFail((ResponseListener)clientListener, successListener);
+        } else if (clientListener instanceof ResponseArrayListener) {
+            return loginOnResponseArrayFail((ResponseArrayListener) clientListener, successListener);
+        }
+        return null;
+    }
+
     static void login(AccountLogin account, ResponseListener listener) {
+        if (account == null)
+            return;
         JSONObject jsonAccount = null;
         try {
             jsonAccount = account.getAsJSONObject();
@@ -145,27 +236,36 @@ public class ApiService {
     }
 
     static void getModelsByBrand(Brand brand, ResponseArrayListener listener) {
+        if (brand == null)
+            return;
         AndroidNetworking.get(endpoint + "brand/{brandId}/models/")
-                .addPathParameter("brandId", brand.id.toString())
+                .addPathParameter("brandId", Integer.toString(brand.id))
                 .setTag("getModels")
                 .setPriority(Priority.LOW)
                 .build()
                 .getAsJSONObject(listener);
     }
 
-    static void getOffersByAccount(AccountLoginOutput account, ResponseArrayListener listener) {
+    static void getMyOffers(final ResponseArrayListener listener) {
         AndroidNetworking.get(endpoint + "offer/mine/")
                 .addHeaders("Authorization", "Basic " + account.token)
                 .setTag("getOffersByAccount")
                 .setPriority(Priority.LOW)
                 .build()
-                .getAsJSONObject(listener);
+                .getAsJSONObject(needAuthentification(listener, new OnSuccessListener() {
+                    @Override
+                    public void onSuccess() {
+                        ApiService.getMyOffers(listener);
+                    }
+                }));
     }
 
     static void getOffersBySearch(Model model, Brand brand, ResponseArrayListener listener) {
+        if (model == null || brand == null)
+            return;
         AndroidNetworking.get(endpoint + "offer/search/")
-                .addQueryParameter("model", model.id.toString())
-                .addQueryParameter("brand", brand.id.toString())
+                .addQueryParameter("model", Integer.toString(model.id))
+                .addQueryParameter("brand", Integer.toString(brand.id))
                 .setTag("getOffersBySearch")
                 .setPriority(Priority.LOW)
                 .build()
@@ -173,15 +273,19 @@ public class ApiService {
     }
 
     static void getOfferDetails(OfferLightOutput offer, ResponseListener listener) {
+        if (offer == null)
+            return;
         AndroidNetworking.get(endpoint + "offer/{offerId}/details/")
-                .addPathParameter("offerId", offer.id.toString())
+                .addPathParameter("offerId", Integer.toString(offer.id))
                 .setTag("getOfferDetails")
                 .setPriority(Priority.LOW)
                 .build()
                 .getAsJSONObject(listener);
     }
 
-    static void addOfferByAccount(AccountLoginOutput account, OfferInput offer, ResponseListener listener) {
+    static void addOffer(final OfferInput offer, final ResponseListener listener) {
+        if (offer == null)
+            return;
         JSONObject jsonOffer = null;
         try {
             jsonOffer = offer.getAsJSONObject();
@@ -198,6 +302,11 @@ public class ApiService {
                 .setTag("postLogin")
                 .setPriority(Priority.LOW)
                 .build()
-                .getAsJSONObject(listener);
+                .getAsJSONObject(needAuthentification(listener, new OnSuccessListener() {
+                    @Override
+                    public void onSuccess() {
+                        ApiService.addOffer(offer, listener);
+                    }
+                }));
     }
 }

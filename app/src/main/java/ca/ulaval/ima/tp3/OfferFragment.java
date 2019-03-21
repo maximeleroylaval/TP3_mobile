@@ -13,6 +13,8 @@ import com.androidnetworking.error.ANError;
 
 import org.json.JSONException;
 
+import java.util.ArrayList;
+
 import ca.ulaval.ima.tp3.models.OfferLightOutput;
 import ca.ulaval.ima.tp3.models.OfferOutput;
 import ca.ulaval.ima.tp3.models.Response;
@@ -51,6 +53,21 @@ public class OfferFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (savedInstanceState != null) {
+            if (this.mOfferFull == null)
+                this.mOfferFull = savedInstanceState.getParcelable("offerFull");
+            if (this.mOfferLight == null)
+                this.mOfferLight = savedInstanceState.getParcelable("offerLight");
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        savedInstanceState.putParcelable("offerFull", mOfferFull);
+        savedInstanceState.putParcelable("offerLight", mOfferLight);
+
+        super.onSaveInstanceState(savedInstanceState);
     }
 
     public void setViewValues(View view) {
@@ -70,13 +87,13 @@ public class OfferFragment extends Fragment {
         descriptionView.setText(this.mOfferFull.description);
         brandNameView.setText(this.mOfferFull.model.brand.name);
         modelNameView.setText(this.mOfferFull.model.name);
-        yearView.setText(this.mOfferFull.year.toString());
+        yearView.setText(Integer.toString(this.mOfferFull.year));
         ownerView.setText(this.mOfferFull.getFormattedOwner(
                 view.getContext().getString(R.string.myself),
                 view.getContext().getString(R.string.anonymous)
         ));
-        kilometersView.setText(this.mOfferFull.kilometers.toString());
-        priceView.setText(this.mOfferFull.price.toString());
+        kilometersView.setText(Integer.toString(this.mOfferFull.kilometers));
+        priceView.setText(Integer.toString(this.mOfferFull.price));
         createdView.setText(this.mOfferFull.getFormattedCreationDate(
                 view.getContext().getString(R.string.date_format)
         ));

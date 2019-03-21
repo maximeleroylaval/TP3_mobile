@@ -16,11 +16,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import ca.ulaval.ima.tp3.models.Brand;
 import ca.ulaval.ima.tp3.models.Model;
-import ca.ulaval.ima.tp3.models.Response;
 import ca.ulaval.ima.tp3.models.ResponseArray;
 import ca.ulaval.ima.tp3.models.ResponseArrayListener;
 
@@ -37,7 +35,7 @@ public class ModelListFragment extends Fragment {
     private ModelRecycleViewAdapter mAdapter;
 
     private Brand brand;
-    private List<Model> models = new ArrayList<>();
+    private ArrayList<Model> models;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -53,17 +51,21 @@ public class ModelListFragment extends Fragment {
 
         fragment.brand = brand;
 
-        ApiService.getModelsByBrand(fragment.brand, new ResponseArrayListener() {
+        return fragment;
+    }
+
+    public void loadModels() {
+        ApiService.getModelsByBrand(brand, new ResponseArrayListener() {
             @Override
             public void onResponse(ResponseArray myResponse) {
                 // do anything with response
                 try {
-                    fragment.models.clear();
+                    models.clear();
                     for (int i = 0; i < myResponse.content.length(); i++) {
                         JSONObject obj = myResponse.content.getJSONObject(i);
-                        fragment.models.add(new Model(obj));
+                        models.add(new Model(obj));
                     }
-                    fragment.mAdapter.notifyDataSetChanged();
+                    mAdapter.notifyDataSetChanged();
                 } catch(JSONException e) {
                     ApiService.displayMessage("JSON EXCEPTION", e.toString());
                 }
@@ -74,19 +76,36 @@ public class ModelListFragment extends Fragment {
                 ApiService.displayError(anError);
             }
         });
-
-        return fragment;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (savedInstanceState != null) {
+            if (this.brand == null)
+                this.brand = savedInstanceState.getParcelable("brand");
+            if (this.models == null)
+                this.models = savedInstanceState.getParcelableArrayList("models");
+        }
+
+        this.models = this.models == null ? new ArrayList<Model>() : this.models;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        savedInstanceState.putParcelable("brand", brand);
+        savedInstanceState.putParcelableArrayList("models", models);
+
+        super.onSaveInstanceState(savedInstanceState);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_model_item_list, container, false);
+
+        this.loadModels();
 
         // Set the adapter
         if (view instanceof RecyclerView) {

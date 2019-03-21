@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ca.ulaval.ima.tp3.models.Brand;
-import ca.ulaval.ima.tp3.models.Response;
 import ca.ulaval.ima.tp3.models.ResponseArray;
 import ca.ulaval.ima.tp3.models.ResponseArrayListener;
 
@@ -35,7 +34,7 @@ public class BrandListFragment extends Fragment {
     private OnBrandListFragmentInteractionListener mListener;
     private BrandRecycleViewAdapter mAdapter;
 
-    private List<Brand> brands = new ArrayList<>();
+    private ArrayList<Brand> brands;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -49,17 +48,21 @@ public class BrandListFragment extends Fragment {
     public static BrandListFragment newInstance() {
         final BrandListFragment fragment = new BrandListFragment();
 
+        return fragment;
+    }
+
+    public void loadBrands() {
         ApiService.getBrands(new ResponseArrayListener() {
             @Override
             public void onResponse(ResponseArray myResponse) {
                 // do anything with response
                 try {
-                    fragment.brands.clear();
+                    brands.clear();
                     for (int i = 0; i < myResponse.content.length(); i++) {
                         JSONObject obj = myResponse.content.getJSONObject(i);
-                        fragment.brands.add(new Brand(obj));
+                        brands.add(new Brand(obj));
                     }
-                    fragment.mAdapter.notifyDataSetChanged();
+                    mAdapter.notifyDataSetChanged();
                 } catch(JSONException e) {
                     ApiService.displayMessage("JSON EXCEPTION", e.toString());
                 }
@@ -70,19 +73,33 @@ public class BrandListFragment extends Fragment {
                 ApiService.displayError(anError);
             }
         });
-
-        return fragment;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (savedInstanceState != null) {
+            if (this.brands == null)
+                this.brands = savedInstanceState.getParcelableArrayList("brands");
+        }
+
+        this.brands = this.brands == null ? new ArrayList<Brand>() : this.brands;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        savedInstanceState.putParcelableArrayList("brands", brands);
+
+        super.onSaveInstanceState(savedInstanceState);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         final View view = inflater.inflate(R.layout.fragment_brand_item_list, container, false);
+
+        this.loadBrands();
 
         // Set the adapter
         if (view instanceof RecyclerView) {

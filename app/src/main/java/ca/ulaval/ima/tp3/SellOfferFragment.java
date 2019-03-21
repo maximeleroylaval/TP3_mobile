@@ -1,27 +1,31 @@
 package ca.ulaval.ima.tp3;
 
+import android.app.DatePickerDialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.widget.SimpleCursorAdapter;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.DatePicker;
 import android.widget.EditText;
-import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
-import android.widget.TextView;
 
 import com.androidnetworking.error.ANError;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
 import ca.ulaval.ima.tp3.models.Brand;
 import ca.ulaval.ima.tp3.models.Model;
@@ -43,11 +47,13 @@ public class SellOfferFragment extends Fragment {
     private ArrayAdapter<String> mTransmissionAdapter;
     private OnSellOfferSubmitFragmentInteractionListener mListener;
 
-    private List<Brand> brands = new ArrayList<>();
-    private List<Model> models = new ArrayList<>();
+    private List<Brand> brands;
+    private List<Model> models;
 
-    private List<String> brandNames = new ArrayList<>();
-    private List<String> modelNames = new ArrayList<>();
+    private List<String> brandNames;
+    private List<String> modelNames;
+
+    private String datePattern = "yyyy";
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -60,8 +66,6 @@ public class SellOfferFragment extends Fragment {
     @SuppressWarnings("unused")
     public static SellOfferFragment newInstance() {
         final SellOfferFragment fragment = new SellOfferFragment();
-
-        fragment.loadBrands();
 
         return fragment;
     }
@@ -120,6 +124,14 @@ public class SellOfferFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        this.brands = this.brands == null ? new ArrayList<Brand>() : this.brands;
+        this.models = this.models == null ? new ArrayList<Model>() : this.models;
+
+        this.brandNames = this.brandNames == null ? new ArrayList<String>() : this.brandNames;
+        this.modelNames = this.modelNames == null ? new ArrayList<String>() : this.modelNames;
+
+        this.loadBrands();
     }
 
     public OfferInput getViewValues(View view) {
@@ -128,20 +140,32 @@ public class SellOfferFragment extends Fragment {
         RadioGroup ownerView = view.findViewById(R.id.owner);
         EditText kilometersView = view.findViewById(R.id.kilometers);
         EditText priceView = view.findViewById(R.id.price);
-        Spinner transmissionView = view.findViewById(R.id.transmisson_choice_spinner);
+        Spinner transmissionView = view.findViewById(R.id.transmission_choice_spinner);
 
         String transmission = "";
+        int year = -1;
+        int kilometers = -1;
+        int price = -1;
 
         Object[] keys = OfferOutput.getFormattedTransmissions().keySet().toArray();
         if (transmissionView.getSelectedItemPosition() < keys.length)
             transmission = keys[transmissionView.getSelectedItemPosition()].toString();
 
+        if (!TextUtils.isEmpty(yearView.getText()))
+            year = Integer.parseInt(yearView.getText().toString());
+
+        if (!TextUtils.isEmpty(kilometersView.getText()))
+            kilometers = Integer.parseInt(kilometersView.getText().toString());
+
+        if (!TextUtils.isEmpty(priceView.getText()))
+            price = Integer.parseInt(priceView.getText().toString());
+
         return new OfferInput(
-                Integer.parseInt(yearView.getText().toString()),
+                year,
                 ownerView.getCheckedRadioButtonId() == R.id.yes,
-                Integer.parseInt(kilometersView.getText().toString()),
+                kilometers,
                 transmission,
-                Integer.parseInt(priceView.getText().toString()),
+                price,
                 this.models.get(modelView.getSelectedItemPosition()).id
         );
     }
@@ -153,7 +177,8 @@ public class SellOfferFragment extends Fragment {
 
         Spinner brandsView = view.findViewById(R.id.brand_choice_spinner);
         Spinner modelsView = view.findViewById(R.id.model_choice_spinner);
-        Spinner transmissionView = view.findViewById(R.id.transmisson_choice_spinner);
+        Spinner transmissionView = view.findViewById(R.id.transmission_choice_spinner);
+        final EditText yearView = view.findViewById(R.id.year);
         View submitView = view.findViewById(R.id.submit);
 
         this.mBrandsAdapter = new ArrayAdapter<>(
@@ -190,6 +215,30 @@ public class SellOfferFragment extends Fragment {
         );
         mTransmissionAdapter.setDropDownViewResource(R.layout.spinner_item);
         transmissionView.setAdapter(mTransmissionAdapter);
+
+        final DatePickerDialog datePickerDialog = new DatePickerDialog(getContext(), new DatePickerDialog.OnDateSetListener() {
+            public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                Calendar newDate = Calendar.getInstance();
+                newDate.set(year, monthOfYear, dayOfMonth);
+                DateFormat df = new SimpleDateFormat(datePattern, Locale.CANADA_FRENCH);
+                yearView.setText(df.format(newDate.getTime()));
+            }
+        }, Calendar.getInstance().get(Calendar.YEAR), Calendar.getInstance().get(Calendar.MONTH),
+                Calendar.getInstance().get(Calendar.DAY_OF_MONTH));
+
+        yearView.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (hasFocus)
+                    datePickerDialog.show();
+            }
+        });
+        yearView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                datePickerDialog.show();
+            }
+        });
 
         submitView.setOnClickListener(new View.OnClickListener() {
             @Override

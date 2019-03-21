@@ -1,16 +1,15 @@
 package ca.ulaval.ima.tp3;
 
-import android.support.v4.app.FragmentTransaction;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import java.util.List;
+
 import ca.ulaval.ima.tp3.BrandListFragment.OnBrandListFragmentInteractionListener;
 import ca.ulaval.ima.tp3.models.Brand;
-
-import java.util.List;
 
 /**
  * {@link RecyclerView.Adapter} that can display a {@link Brand} and makes a call to the

@@ -7,15 +7,15 @@ import java.util.Calendar;
 import java.util.List;
 
 public class OfferInput {
-    public Integer year;
-    public Boolean fromOwner;
-    public Integer kilometers;
+    public int year;
+    public boolean fromOwner;
+    public int kilometers;
     public String transmission;
-    public Integer price;
-    public Integer modelId;
+    public int price;
+    public int modelId;
 
-    public OfferInput(Integer year, Boolean fromOwner, Integer kilometers, String transmission,
-                      Integer price, Integer modelId) {
+    public OfferInput(int year, boolean fromOwner, int kilometers, String transmission,
+                      int price, int modelId) {
         this.year = year;
         this.fromOwner = fromOwner;
         this.kilometers = kilometers;
@@ -39,13 +39,13 @@ public class OfferInput {
         if (this.year < 1950 || this.year > Calendar.getInstance().get(Calendar.YEAR)) {
             return "Impossible production year supplied";
         }
-        if (this.kilometers < 0 || this.kilometers > 1000000) {
+        if (this.kilometers < 0) {
             return "Impossible number of kilometers supplied";
         }
         if (OfferOutput.getFormattedTransmissionByResourceId(this.transmission) == null) {
             return "Impossible transmission supplied";
         }
-        if (this.price < 0 || this.price > 10000000) {
+        if (this.price < 0) {
             return "Impossible price supplied";
         }
         boolean foundModel = false;

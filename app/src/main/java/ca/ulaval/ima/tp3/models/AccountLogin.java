@@ -5,7 +5,7 @@ import org.json.JSONObject;
 
 public class AccountLogin {
     public String email;
-    public Integer identificationNumber;
+    public int identificationNumber;
 
     public AccountLogin(String email, Integer identificationNumber) {
         this.email = email;
