@@ -1,7 +1,6 @@
 package ca.ulaval.ima.tp3;
 
 import android.content.ComponentName;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -11,20 +10,14 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.widget.EditText;
-import android.widget.Toast;
 
 import com.androidnetworking.error.ANError;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import ca.ulaval.ima.tp3.models.AccountLogin;
 import ca.ulaval.ima.tp3.models.Brand;
 import ca.ulaval.ima.tp3.models.Model;
+import ca.ulaval.ima.tp3.models.OfferInput;
 import ca.ulaval.ima.tp3.models.OfferLightOutput;
 import ca.ulaval.ima.tp3.models.OfferOutput;
 import ca.ulaval.ima.tp3.models.Response;
@@ -33,8 +26,9 @@ import ca.ulaval.ima.tp3.models.ResponseListener;
 public class MainActivity extends AppCompatActivity
     implements BrandListFragment.OnBrandListFragmentInteractionListener,
         ModelListFragment.OnModelListFragmentInteractionListener,
-        OfferLightListFragment.OnOfferLightListFragmentInteractionListener,
-        OfferFragment.OnOfferContactFragmentInteractionListener{
+        OfferLightListFragment.OnOfferListFragmentInteractionListener,
+        OfferFragment.OnOfferContactFragmentInteractionListener,
+        SellOfferFragment.OnSellOfferSubmitFragmentInteractionListener{
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -135,8 +129,18 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onOfferLightListFragmentInteractionListener(OfferLightOutput offer) {
-        mSectionsPagerAdapter.setOfferLight(offer);
+    public void onOfferListFragmentInteractionListener(OfferLightOutput offer, int type) {
+        switch (type) {
+            case 0:
+                mSectionsPagerAdapter.setOfferLight(offer);
+                break;
+            case 1:
+                mSectionsPagerAdapter.setOfferAccount(offer);
+                break;
+            default:
+                mSectionsPagerAdapter.setOfferLight(offer);
+                break;
+        }
         mSectionsPagerAdapter.notifyDataSetChanged();
     }
 
@@ -145,25 +149,42 @@ public class MainActivity extends AppCompatActivity
         Intent sendIntent = new Intent(Intent.ACTION_SENDTO);
 
         ComponentName emailApp = sendIntent.resolveActivity(getPackageManager());
-        ComponentName unsupportedAction = ComponentName.unflattenFromString("com.android.fallback/.Fallback");
+        ComponentName unsupportedAction = ComponentName.
+                unflattenFromString("com.android.fallback/.Fallback");
         boolean hasEmailApp = emailApp != null && !emailApp.equals(unsupportedAction);
 
         if (!hasEmailApp) {
             ApiService.displayMessage(
-                    "Email error",
-                    "Please make sure that you have configured at least one email application on your phone"
+                    "EMAIL ERROR",
+                    getString(R.string.email_app_missing)
             );
         } else {
             String uriText =
                     "mailto:" + offer.seller.email +
                             "?subject=" + Uri.encode(offer.model.brand.name + offer.model.name) +
-                            "&body=" + Uri.encode("Dear " + offer.seller.firstName + " " + offer.seller.lastName + ",\n");
+                            "&body=" + Uri.encode(getString(R.string.dear) + " " +
+                            offer.seller.firstName + " " + offer.seller.lastName + ",\n");
 
             Uri uri = Uri.parse(uriText);
 
             sendIntent.setData(uri);
             startActivity(Intent.createChooser(sendIntent, "Send email"));
         }
+    }
+
+    @Override
+    public void onSellOfferSubmitFragmentInteractionListener(OfferInput offer) {
+        ApiService.addOfferByAccount(ApiService.getAccount(), offer, new ResponseListener() {
+            @Override
+            public void onResponse(Response response) {
+                ApiService.displayMessage("OFFER UPLOADED", getString(R.string.upload_success));
+            }
+
+            @Override
+            public void onError(ANError anError) {
+                ApiService.displayError(anError);
+            }
+        });
     }
 
     /**
@@ -175,6 +196,7 @@ public class MainActivity extends AppCompatActivity
         private Brand mBrand = null;
         private Model mModel = null;
         private OfferLightOutput mOffer = null;
+        private OfferLightOutput mOfferAccount = null;
 
         public SectionsPagerAdapter(FragmentManager fm) {
             super(fm);
@@ -192,6 +214,8 @@ public class MainActivity extends AppCompatActivity
             this.mOffer = offer;
         }
 
+        public void setOfferAccount(OfferLightOutput offer) { this.mOfferAccount = offer; }
+
         public boolean backPressed(int position) {
             boolean isPressed = false;
             switch (position) {
@@ -204,11 +228,17 @@ public class MainActivity extends AppCompatActivity
                         else {
                             this.setOfferLight(null);
                         }
-                        this.notifyDataSetChanged();
+                        isPressed = true;
+                    }
+                    break;
+                case 2:
+                    if (this.mOfferAccount != null) {
+                        this.setOfferAccount(null);
                         isPressed = true;
                     }
                     break;
             }
+            this.notifyDataSetChanged();
             return isPressed;
         }
 
@@ -229,16 +259,13 @@ public class MainActivity extends AppCompatActivity
                     }
                     break;
                 case 1:
-                    try {
-                        JSONObject obj = new JSONObject("{id:2, name:\"Aston Martin\"}");
-                        Brand brand = new Brand(obj);
-                        fragment = ModelListFragment.newInstance(brand);
-                    } catch (JSONException e) {
-                        fragment = null;
-                    }
+                    fragment = SellOfferFragment.newInstance();
                     break;
                 case 2:
-                    fragment = OfferLightListFragment.newInstance();
+                    if (this.mOfferAccount == null)
+                        fragment = OfferLightListFragment.newInstance();
+                    else
+                        fragment = OfferFragment.newInstance(mOfferAccount);
                     break;
                 default:
                     fragment = BrandListFragment.newInstance();

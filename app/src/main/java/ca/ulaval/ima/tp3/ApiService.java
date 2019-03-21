@@ -3,6 +3,9 @@ package ca.ulaval.ima.tp3;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.support.v7.app.AlertDialog;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
@@ -18,6 +21,7 @@ import ca.ulaval.ima.tp3.models.AccountLogin;
 import ca.ulaval.ima.tp3.models.AccountLoginOutput;
 import ca.ulaval.ima.tp3.models.Brand;
 import ca.ulaval.ima.tp3.models.Model;
+import ca.ulaval.ima.tp3.models.OfferInput;
 import ca.ulaval.ima.tp3.models.OfferLightOutput;
 import ca.ulaval.ima.tp3.models.Response;
 import ca.ulaval.ima.tp3.models.ResponseArrayListener;
@@ -91,37 +95,25 @@ public class ApiService {
 
     static void clientLogin(final ResponseListener listener) {
         AlertDialog.Builder builder = new AlertDialog.Builder(mainContext);
+        LayoutInflater inflater = LayoutInflater.from(mainContext);
+        final View loginView = inflater.inflate(R.layout.alert_login, null);
+        final EditText email = loginView.findViewById(R.id.email);
+        final EditText identificationNumber = loginView.findViewById(R.id.identificationNumber);
+        Button login = loginView.findViewById(R.id.connect);
 
-        builder.setTitle("Se connecter");
+        builder.setView(loginView);
+        final AlertDialog dialog = builder.create();
 
-        LinearLayout layout = new LinearLayout(mainContext);
-        layout.setOrientation(LinearLayout.VERTICAL);
-
-        final EditText email = new EditText(mainContext);
-        email.setText(mainContext.getString(R.string.student_email));
-
-        final EditText identificationNumber = new EditText(mainContext);
-        identificationNumber.setText(mainContext.getString(R.string.student_identification_number));
-
-        layout.addView(email);
-        layout.addView(identificationNumber);
-
-        builder.setView(layout);
-
-        builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int whichButton) {
+        login.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
                 String valueEmail = email.getText().toString().trim();
                 String valueIdentificationNumber = identificationNumber.getText().toString().trim();
                 ApiService.login(new AccountLogin(valueEmail, Integer.parseInt(valueIdentificationNumber)), listener);
-            }
-        });
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int whichButton) {
-                dialog.cancel();
+                dialog.dismiss();
             }
         });
 
-        AlertDialog dialog = builder.create();
         dialog.show();
     }
 
@@ -184,6 +176,26 @@ public class ApiService {
         AndroidNetworking.get(endpoint + "offer/{offerId}/details/")
                 .addPathParameter("offerId", offer.id.toString())
                 .setTag("getOfferDetails")
+                .setPriority(Priority.LOW)
+                .build()
+                .getAsJSONObject(listener);
+    }
+
+    static void addOfferByAccount(AccountLoginOutput account, OfferInput offer, ResponseListener listener) {
+        JSONObject jsonOffer = null;
+        try {
+            jsonOffer = offer.getAsJSONObject();
+        } catch (JSONException e) {
+            ApiService.displayMessage("JSON ERROR", "Cannot parse supplied account as json");
+            e.printStackTrace();
+        }
+        if (jsonOffer == null) {
+            return;
+        }
+        AndroidNetworking.post(endpoint + "offer/add/")
+                .addHeaders("Authorization", "Basic " + account.token)
+                .addJSONObjectBody(jsonOffer)
+                .setTag("postLogin")
                 .setPriority(Priority.LOW)
                 .build()
                 .getAsJSONObject(listener);

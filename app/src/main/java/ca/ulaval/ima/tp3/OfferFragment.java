@@ -3,8 +3,6 @@ package ca.ulaval.ima.tp3;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,7 +16,6 @@ import org.json.JSONException;
 import ca.ulaval.ima.tp3.models.OfferLightOutput;
 import ca.ulaval.ima.tp3.models.OfferOutput;
 import ca.ulaval.ima.tp3.models.Response;
-import ca.ulaval.ima.tp3.models.ResponseArrayListener;
 import ca.ulaval.ima.tp3.models.ResponseListener;
 
 /**
@@ -69,7 +66,7 @@ public class OfferFragment extends Fragment {
         TextView descriptionView = view.findViewById(R.id.description);
         View contactView = view.findViewById(R.id.contact);
 
-        transmissionView.setText(this.mOfferFull.transmission);
+        transmissionView.setText(getString(this.mOfferFull.getFormattedTransmissionByResourceId()));
         descriptionView.setText(this.mOfferFull.description);
         brandNameView.setText(this.mOfferFull.model.brand.name);
         modelNameView.setText(this.mOfferFull.model.name);

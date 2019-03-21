@@ -18,27 +18,24 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-import ca.ulaval.ima.tp3.models.AccountLogin;
-import ca.ulaval.ima.tp3.models.AccountLoginOutput;
 import ca.ulaval.ima.tp3.models.Model;
 import ca.ulaval.ima.tp3.models.OfferLightOutput;
-import ca.ulaval.ima.tp3.models.Response;
 import ca.ulaval.ima.tp3.models.ResponseArray;
 import ca.ulaval.ima.tp3.models.ResponseArrayListener;
-import ca.ulaval.ima.tp3.models.ResponseListener;
 
 /**
  * A fragment representing a list of Items.
  * <p/>
- * Activities containing this fragment MUST implement the {@link OnOfferLightListFragmentInteractionListener}
+ * Activities containing this fragment MUST implement the {@link OnOfferListFragmentInteractionListener}
  * interface.
  */
 public class OfferLightListFragment extends Fragment {
 
     private Integer mColumns = 1;
-    private OnOfferLightListFragmentInteractionListener mListener;
+    private OnOfferListFragmentInteractionListener mListener;
     private OfferLightRecycleViewAdapter mAdapter;
 
+    private int type;
     private Model model;
     private List<OfferLightOutput> offers = new ArrayList<>();
 
@@ -55,6 +52,7 @@ public class OfferLightListFragment extends Fragment {
         final OfferLightListFragment fragment = new OfferLightListFragment();
 
         fragment.model = model;
+        fragment.type = 0;
 
         ApiService.getOffersBySearch(fragment.model, fragment.model.brand, new ResponseArrayListener() {
             @Override
@@ -85,6 +83,8 @@ public class OfferLightListFragment extends Fragment {
     @SuppressWarnings("unused")
     public static OfferLightListFragment newInstance() {
         final OfferLightListFragment fragment = new OfferLightListFragment();
+
+        fragment.type = 1;
 
         ApiService.getOffersByAccount(ApiService.getAccount(), new ResponseArrayListener() {
             @Override
@@ -130,7 +130,7 @@ public class OfferLightListFragment extends Fragment {
             } else {
                 recyclerView.setLayoutManager(new GridLayoutManager(context, mColumns));
             }
-            mAdapter = new OfferLightRecycleViewAdapter(this.offers, mListener);
+            mAdapter = new OfferLightRecycleViewAdapter(this.offers, mListener, type);
             recyclerView.setAdapter(mAdapter);
         }
         return view;
@@ -139,11 +139,11 @@ public class OfferLightListFragment extends Fragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if (context instanceof OnOfferLightListFragmentInteractionListener) {
-            mListener = (OnOfferLightListFragmentInteractionListener) context;
+        if (context instanceof OnOfferListFragmentInteractionListener) {
+            mListener = (OnOfferListFragmentInteractionListener) context;
         } else {
             throw new RuntimeException(context.toString()
-                    + " must implement OnListFragmentInteractionListener");
+                    + " must implement OnOfferListFragmentInteractionListener");
         }
     }
 
@@ -163,8 +163,8 @@ public class OfferLightListFragment extends Fragment {
      * "http://developer.android.com/training/basics/fragments/communicating.html"
      * >Communicating with Other Fragments</a> for more information.
      */
-    public interface OnOfferLightListFragmentInteractionListener {
+    public interface OnOfferListFragmentInteractionListener {
         // TODO: Update argument type and name
-        void onOfferLightListFragmentInteractionListener(OfferLightOutput offer);
+        void onOfferListFragmentInteractionListener(OfferLightOutput offer, int type);
     }
 }

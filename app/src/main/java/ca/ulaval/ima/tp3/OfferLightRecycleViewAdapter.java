@@ -7,26 +7,26 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.squareup.picasso.Picasso;
-
 import java.util.List;
 
-import ca.ulaval.ima.tp3.OfferLightListFragment.OnOfferLightListFragmentInteractionListener;
+import ca.ulaval.ima.tp3.OfferLightListFragment.OnOfferListFragmentInteractionListener;
 import ca.ulaval.ima.tp3.models.OfferLightOutput;
 
 /**
  * {@link RecyclerView.Adapter} that can display a {@link OfferLightOutput and makes a call to the
- * specified {@link OnOfferLightListFragmentInteractionListener}.
+ * specified {@link OnOfferListFragmentInteractionListener}.
  * TODO: Replace the implementation with code for your data type.
  */
 public class OfferLightRecycleViewAdapter extends RecyclerView.Adapter<OfferLightRecycleViewAdapter.ViewHolder> {
 
+    private int mType;
     private final List<OfferLightOutput> mValues;
-    private final OnOfferLightListFragmentInteractionListener mListener;
+    private final OnOfferListFragmentInteractionListener mListener;
 
-    public OfferLightRecycleViewAdapter(List<OfferLightOutput> items, OnOfferLightListFragmentInteractionListener listener) {
+    public OfferLightRecycleViewAdapter(List<OfferLightOutput> items, OnOfferListFragmentInteractionListener listener, int type) {
         mValues = items;
         mListener = listener;
+        mType = type;
     }
 
     @Override
@@ -61,7 +61,7 @@ public class OfferLightRecycleViewAdapter extends RecyclerView.Adapter<OfferLigh
                 if (null != mListener) {
                     // Notify the active callbacks interface (the activity, if the
                     // fragment is attached to one) that an item has been selected.
-                    mListener.onOfferLightListFragmentInteractionListener(holder.mItem);
+                    mListener.onOfferListFragmentInteractionListener(holder.mItem, mType);
                 }
             }
         });
