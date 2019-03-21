@@ -5,6 +5,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -76,14 +77,16 @@ public class SellOfferFragment extends Fragment {
             public void onResponse(ResponseArray response) {
                 try {
                     mBrandsAdapter.clear();
-                    mModelsAdapter.clear();
                     brands.clear();
+                    models.clear();
                     for (int i = 0; i < response.content.length(); i++) {
                         JSONObject obj = response.content.getJSONObject(i);
                         Brand brand = new Brand(obj);
                         brands.add(brand);
                         brandNames.add(brand.name);
                     }
+                    if (brands.get(0) != null)
+                        loadModels(brands.get(0));
                     mBrandsAdapter.notifyDataSetChanged();
                 } catch(JSONException e) {
                     ApiService.displayMessage("JSON EXCEPTION", e.toString());
@@ -122,6 +125,14 @@ public class SellOfferFragment extends Fragment {
     }
 
     @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if (isVisibleToUser) {
+            this.loadBrands();
+        }
+    }
+
+    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
@@ -130,8 +141,6 @@ public class SellOfferFragment extends Fragment {
 
         this.brandNames = this.brandNames == null ? new ArrayList<String>() : this.brandNames;
         this.modelNames = this.modelNames == null ? new ArrayList<String>() : this.modelNames;
-
-        this.loadBrands();
     }
 
     public OfferInput getViewValues(View view) {
@@ -143,6 +152,7 @@ public class SellOfferFragment extends Fragment {
         Spinner transmissionView = view.findViewById(R.id.transmission_choice_spinner);
 
         String transmission = "";
+        int modelId = -1;
         int year = -1;
         int kilometers = -1;
         int price = -1;
@@ -160,13 +170,18 @@ public class SellOfferFragment extends Fragment {
         if (!TextUtils.isEmpty(priceView.getText()))
             price = Integer.parseInt(priceView.getText().toString());
 
+        if (this.models != null && this.models.size() > 0 && modelView.getSelectedItemPosition() > -1
+                && this.models.size() > modelView.getSelectedItemPosition() &&
+                this.models.get(modelView.getSelectedItemPosition()) != null)
+            modelId = this.models.get(modelView.getSelectedItemPosition()).id;
+
         return new OfferInput(
                 year,
                 ownerView.getCheckedRadioButtonId() == R.id.yes,
                 kilometers,
                 transmission,
                 price,
-                this.models.get(modelView.getSelectedItemPosition()).id
+                modelId
         );
     }
 

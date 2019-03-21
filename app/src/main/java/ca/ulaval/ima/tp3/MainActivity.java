@@ -11,9 +11,10 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 
+import com.androidnetworking.AndroidNetworking;
 import com.androidnetworking.error.ANError;
+import com.jacksonandroidnetworking.JacksonParserFactory;
 
 import ca.ulaval.ima.tp3.models.Brand;
 import ca.ulaval.ima.tp3.models.Model;
@@ -54,8 +55,6 @@ public class MainActivity extends AppCompatActivity
 
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 
-        this.loadSavedValues(savedInstanceState);
-
         // Set up the ViewPager with the sections adapter.
         mViewPager = findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
@@ -64,6 +63,8 @@ public class MainActivity extends AppCompatActivity
 
         mViewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
         tabLayout.addOnTabSelectedListener(new TabLayout.ViewPagerOnTabSelectedListener(mViewPager));
+
+        this.loadSavedValues(savedInstanceState);
     }
 
     public void loadSavedValues(Bundle savedInstanceState) {
@@ -232,7 +233,6 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         public Fragment getItem(int position) {
-            Log.e("POS", "" + position);
             Fragment fragment;
             switch (position) {
                 case 0:

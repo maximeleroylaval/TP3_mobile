@@ -3,7 +3,6 @@ package ca.ulaval.ima.tp3;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.support.v7.app.AlertDialog;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -31,8 +30,6 @@ import ca.ulaval.ima.tp3.models.ResponseError;
 import ca.ulaval.ima.tp3.models.ResponseListener;
 
 public class ApiService {
-
-    private static String TAG = "[API SERVICE]";
 
     private static String endpoint = "http://159.203.33.206/api/v1/";
 
@@ -73,7 +70,6 @@ public class ApiService {
                     ResponseError response = new ResponseError(anError.getErrorBody());
                     msg += "\nMessage : " + response.display;
                 } catch (JSONException e) {
-                    e.printStackTrace();
                     msg += "\nBody : " + anError.getErrorBody();
                 }
                 msg += "\nDetail : " + anError.getErrorDetail();
@@ -93,12 +89,14 @@ public class ApiService {
                 .setTitle(title);
 
         builder.setPositiveButton("OK", listener);
-        builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
-            @Override
-            public void onCancel(DialogInterface dialog) {
-                listener.onClick(dialog, DialogInterface.BUTTON_POSITIVE);
-            }
-        });
+        if (listener != null) {
+            builder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                @Override
+                public void onCancel(DialogInterface dialog) {
+                    listener.onClick(dialog, DialogInterface.BUTTON_POSITIVE);
+                }
+            });
+        }
 
         AlertDialog dialog = builder.create();
         dialog.show();
@@ -119,9 +117,7 @@ public class ApiService {
             public void onResponse(Response response) {
                 try {
                     ApiService.account = new AccountLoginOutput(response.content);
-                    Log.e("LOGGED", "BORDEL");
                     if (listener != null) {
-                        Log.e("LOGGED", "CALLING SUCCESS");
                         listener.onSuccess();
                     }
                 } catch (JSONException e) {
