@@ -135,30 +135,12 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onOfferContactFragmentInteractionListener(OfferOutput offer) {
         Intent sendIntent = new Intent(Intent.ACTION_SENDTO);
-
-        ComponentName emailApp = sendIntent.resolveActivity(getPackageManager());
-        ComponentName unsupportedAction = ComponentName.
-                unflattenFromString("com.android.fallback/.Fallback");
-        boolean hasEmailApp = emailApp != null && !emailApp.equals(unsupportedAction);
-
-        if (!hasEmailApp) {
-            ApiService.displayMessage(
-                    "EMAIL ERROR",
-                    getString(R.string.email_app_missing),
-                    null
-            );
-        } else {
-            String uriText =
-                    "mailto:" + offer.seller.email +
-                            "?subject=" + Uri.encode(offer.model.brand.name + offer.model.name) +
-                            "&body=" + Uri.encode(getString(R.string.dear) + " " +
-                            offer.seller.firstName + " " + offer.seller.lastName + ",\n");
-
-            Uri uri = Uri.parse(uriText);
-
-            sendIntent.setData(uri);
-            startActivity(Intent.createChooser(sendIntent, "Send email"));
-        }
+        String uriText =
+                "mailto:" + offer.seller.email +
+                        "?subject=" + Uri.encode(offer.model.brand.name + " " + offer.model.name);
+        Uri uri = Uri.parse(uriText);
+        sendIntent.setData(uri);
+        startActivity(Intent.createChooser(sendIntent, "Send email"));
     }
 
     @Override
